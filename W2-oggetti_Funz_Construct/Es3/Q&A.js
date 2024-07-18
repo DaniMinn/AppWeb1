@@ -1,5 +1,4 @@
-// importo la libreria per stampare la data
-import dayjs from 'dayjs';
+
 
 
 // Define a constructor function Answer to create one or more answers.
@@ -7,14 +6,14 @@ function Answer(response, respUsername, score=0, date, ) {
     this.response = response;
     this.respUsername = respUsername;
     this.score  =  score;
-    this.date = dayjs(date);
+    this.date = date;
 }
 
 // Define a constructor function Question
 function Question(question, questUsername, date ) {
     this.question = question;
     this.questUsername = questUsername;
-    this.date = dayjs(date);
+    this.date = date;
     this.listAnswers  = [];
 
     //Implement methods to manipulate its answers:
@@ -29,17 +28,18 @@ function Question(question, questUsername, date ) {
     }
 
     // afterDate(date) returns an array of Answers after the given date
-    this.afterDate(date) = (date) => {
-        return this.listAnswers.filter(ans => ans.date.isAfter(dayjs(date)));
+    this.afterDate = (date) => {
+        return this.listAnswers.filter(ans => ans.date === date);
+        
     }
 
     //listByDate() returns an array of Answers, sorted by increasing date
-    this.listByDate() = () => {
-        return [...this.listAnswers].sort((a,b)=>{a.date.isAfter(b.date)});
+    this.listByDate = () => {
+        return [...this.listAnswers].sort((a,b)=>{a.date > b.date});
     }
 
     // listByScore() // returns an array of Answers, sortedy decreasing score
-    this.listByScore() = ()=>{
+    this.listByScore = ()=>{
         return[...this.listAnswers].sort((a,b)=>b.score-a.score);
     }
 }
@@ -59,6 +59,4 @@ question.add(risp4);
 const risposta2 = question.find("user2");
 console.log(question);
 console.log('\nAnswers by Luca: ' + answersByLuca);
-console.log('\nBy date: ' + question.listByDate());
 console.log('\nBy score: ' + question.listByScore());
-console.log('\nAfter 2024-07-16: ' + question.afterDate('2024-07-16'));
