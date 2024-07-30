@@ -1,64 +1,86 @@
 import dayjs from 'dayjs';
+import sqlite from 'sqlite3';
 
-function Answer(text, username, date, score=0) {
+const db = new sqlite.Database('questions.sqlite', 
+  (err)=>{if(err) throw err})
+
+function Answer(id, text, email, date, score=0) {
+  this.id = id;
   this.text = text;
-  this.username = username;
+  this.email = email;
   this.score = score;
   this.date = dayjs(date);
 
   this.toString = () => {
-    return `${this.username} replied '${this.text}' on ${this.date.format('YYYY-MM-DD')} and got a score of ${this.score}`;
+    return `${this.email} replied '${this.text}' on ${this.date.format('YYYY-MM-DD')} and got a score of ${this.score}`;
   }
 
 }
 
-function Question(text, username, date) {
+function Question(id,text, email, date) {
+  this.id = id;
   this.text = text;
-  this.username = username;
+  this.email = email;
   this.date = dayjs(date);
-  this.answers = [];
+ // this.answers = []; //no longer needed,answers stored database table.
+}
 
-  this.add = (answer) => {
-    this.answers.push(answer);
+
+function QuestionList() {
+  // returns a Promise that resolves to a `Question` with the given id
+  this.getQuestion = function(questionId) {
+    return new Promise((resolve,reject)=>{
+      const sql = `select q.id, q.text, u.email, q.date
+      from question q, "user" u
+      where q.id = ?
+      and q.authorId = u.id `
+
+      db.get(sql, [questionId], (err, row)=>{
+        if(err)
+          reject(err)
+        else 
+          resolve(new Question(row.id, row.text, row.email, dayjs(row.date)))
+      })
+    })
   }
 
-  this.find = (username) => {
-    /*const foundAnswers = [];
-    for(const ans of this.answers) {
-      if(ans.username === username)
-        foundAnswers.push(ans);
-    }
-    return foundAnswers;*/
-    return this.answers.filter(ans => ans.username === username);
+  // restituisce una promise contenente email associata a user.id
+  this.getUserId = function(email) {
+    return new Promise((resolve, reject)=>{
+      const sql = `select u.id 
+      from "user" u 
+      where u.email = ?`
+      db.get(sql, [email], (err, row)=>{
+        if(err)
+          reject(err)
+        else
+          resolve(Number(row.id))
+      })
+    })
   }
 
-  this.afterDate = (date) => {
-    return this.answers.filter(ans => ans.date.isAfter(dayjs(date)));
-  }
-
-  this.listByDate = () => {
-    return [...this.answers].sort((a,b) => (a.date.isAfter(b.date) ? 1 : -1));
-  }
-
-  this.listByScore = () => {
-    return [...this.answers].sort((a,b) => b.score - a.score);
+  // pass a fully-constructed `Question` object.
+  this.addQuestion = function(q) {
+    const userEmail = q.email
+    const userIdPromise = this.getUserId(userEmail)
+    return userIdPromise.then((userId)=>{
+      return new Promise((resolve,reject)=>{
+        const sql = `insert into question(id, text, authorId, date) values(?,?,?,?)`
+        db.run(sql, [q.id, q.text, userId, q.date.format('YYYY-MM-DD')],
+        (err) => {
+          if(err) reject(err)
+          else resolve()
+        })
+      })
+    })
   }
 }
 
-const question = new Question('Is JS better than Python?', 'Luigi De Russis', '2024-02-27');
-const firstAnswer = new Answer('Yes', 'Luca Mannella', '2024-02-28', -10);
-const secondAnswer = new Answer('Not in a million year', 'Guido van Rossum', '2024-03-01', 5);
-const thirdAnswer = new Answer('No', 'Albert Einstein', '2024-03-11');
-const fourthAnswer = new Answer('Then, I don\'t know', 'Luca Mannella', '2024-03-10');
 
-question.add(firstAnswer);
-question.add(secondAnswer);
-question.add(thirdAnswer);
-question.add(fourthAnswer);
+const qlist = new QuestionList()
+const q1 = qlist.getQuestion(1)
+q1.then((q)=>{console.log(q.toString())})
 
-const answersByLuca = question.find('Luca Mannella');
-console.log(question);
-console.log('\nAnswers by Luca: ' + answersByLuca);
-console.log('\nBy date: ' + question.listByDate());
-console.log('\nBy score: ' + question.listByScore());
-console.log('\nAfter 2024-02-29: ' + question.afterDate('2024-02-29'));
+const q2 = new Question(5, 'Does it work?', 'daniele.minnelli@polito.it', dayjs())
+qlist.addQuestion(q2).then(()=>{console.log("Question added")})
+
