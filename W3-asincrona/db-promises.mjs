@@ -6,7 +6,7 @@ const db = new sqlite.Database('qestionPromis.sqlite',
     (err)=>{if(err) throw err}
 )
 
-// creo la promise, funzione asincrona
+// 1. creo la promise, funzione asincrona
 const users = new Promise((resolve, reject)=>{
     db.all("select * from user", (err, rows)=>{
         if(err)
@@ -16,8 +16,16 @@ const users = new Promise((resolve, reject)=>{
     })
 });
 
+// consumo la promise quando è pronta
+// .then per le promise completate
+users.then((rows)=>{
+    console.log(rows);
+}).catch((err)=>{ // .catch per le promise rifiutate
+    console.log("Error", err);
+})
 
-// creo una funzione Promise
+
+// 2. stessa cosa ma fatta con una FUNZIONE Promise
 function get_users() {
     return new Promise((resolve, reject)=>{
         db.all("select * from user", (err, rows)=>{
@@ -29,13 +37,5 @@ function get_users() {
     });
 }
 
-console.log(users)
-
-// .then per le promise completate
-users.then((rows)=>{
-    console.log(rows);
-}).catch((err)=>{ // .catch per le promise rifiutate
-    console.log("Error", err);
-})
-
+// consumo la funzione promise
 get_users().then((rows)=>{console.log(rows.length)})
