@@ -1,9 +1,21 @@
-/* 
- * 01UDFOV Applicazioni Web I / 01TXYOV Web Applications I
- * Lab 1 - Exercise 2 - 2024
- */
+
 
 import dayjs from "dayjs";
+import sqlite from "sqlite3";
+
+// come accedo a un database .db già presente?
+const PATH = 'C:/Users/daniele.minnelli/Documents/90 - Privato/Formazione/AppWeb1/W3-asincrona/lab02-database/films.db';
+const db = new sqlite.Database(PATH,
+  (err)=>{if(err) throw err}
+);
+
+// // verifico la corretta connessione al database 
+// let sql = 'SELECT * FROM films';
+// db.all(sql,[],(err, rows)=>{
+//     if(err) throw err;
+//     rows.forEach((rows)=>{console.log(rows)});
+// });
+
 
 
 function Film(id, title, isFavorite = false, watchDate = null, rating = 0, userId = 1) {
@@ -62,47 +74,50 @@ function FilmLibrary() {
     return newArray;
   }
 
+
+  // LAB2: Aggiungere i seguenti punti, come metodi asincroni 
+  // di FilmLibrary
+
+  // a. Retrieve all the stored films and return a Promise that 
+  //    resolves to an array of Film objects.
+  this.getAllData = () => {
+    return new Promise((resolve, reject) => {
+      db.all("SELECT * FROM films", (err, rows) =>{
+        if(err)
+          reject(err)
+        else
+          resolve(rows)
+      })
+    })
+  }
+
+  //b. Retrieve all favorite films and return a Promise that resolves to an array of Film objects.
+  this.getFavourites = ()=>{
+    return new Promise((resolve, reject)=>{
+      db.all("SELECT * FROM films WHERE isFavorite = 1", (err, rows)=>{
+        if(err)
+          reject(err);
+        else  
+          resolve(rows);
+      })
+    })
+  }
 }
 
 
+
+
+
 function main() {
-  // Creating some film entries
-  const pulpFiction = new Film(1, "Pulp Fiction", true, "2024-03-10", 5);
-  const grams21 = new Film(2, "21 Grams", true, "2024-03-17", 4);
-  const starWars = new Film(3, "Star Wars", false);
-  const matrix = new Film(4, "Matrix", false);
-  const shrek = new Film(5, "Shrek", false, "2024-03-21", 3);
-
-  // Adding the films to the FilmLibrary
-  const library = new FilmLibrary();
-  library.addNewFilm(pulpFiction);
-  library.addNewFilm(grams21);
-  library.addNewFilm(starWars);
-  library.addNewFilm(matrix);
-  library.addNewFilm(shrek);
-
-  // Print Sorted films
-  console.log("***** List of films (sorted) *****");
-  const sortedFilms = library.sortByDate();
-  sortedFilms.forEach((film) => console.log(film.toString()));
-
-  // Deleting film #3
-  library.deleteFilm(3);
-
-  // Reset dates
-  library.resetWatchedFilms();
-
-  // Printing modified Library
-  console.log("***** List of films *****");
-  library.list.forEach((item) => console.log(item.toString()));
-
-  // Retrieve and print films with an assigned rating
-  console.log("***** Films filtered, only the rated ones *****");
-  const ratedFilms = library.getRated();
-  ratedFilms.forEach((film) => console.log(film.toString()));
+ 
+  const filmLibrary = new FilmLibrary();
+ 
+  filmLibrary.getAllData().then((rows)=>{rows.forEach((row)=>{console.log(row)})});
+  
+  filmLibrary.getFavourites().then((rows)=>{rows.forEach((row)=>{console.log(row)})});
 
   // Additional instruction to enable debug 
-  debugger;
+  //debugger;
 }
 
 main();
