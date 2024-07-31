@@ -20,7 +20,7 @@ const users = new Promise((resolve, reject)=>{
 // creo una funzione Promise
 function get_users() {
     return new Promise((resolve, reject)=>{
-        db.all("select * froom user", (err, rows)=>{
+        db.all("select * from user", (err, rows)=>{
             if(err)
                 reject(err)
             else
